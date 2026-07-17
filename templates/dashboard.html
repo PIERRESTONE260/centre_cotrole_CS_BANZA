@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/static/css/admin.css">
+        <title>Centre de Contrôle CS BANZA</title>
+
+        <style>
+            /* --- Style Général --- */
+            :root {
+                --primary-color: #1a3a5f;
+                --accent-color: #2c5a8e;
+                --danger-color: #e74c3c;
+                --bg-color: #f4f7f6;
+            }
+
+            body {
+                font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: var(--bg-color);
+                margin: 0;
+                padding: 20px;
+                color: #333;
+            }
+
+            .container {
+                max-width: 1000px;
+                margin: auto;
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            }
+
+            h1, h2 {
+                color: var(--primary-color);
+                border-bottom: 2px solid #eee;
+                padding-bottom: 10px;
+            }
+
+            /* --- Formulaire de Publication --- */
+            form {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 40px;
+                padding: 25px;
+                background: #f8f9fa;
+                border-radius: 8px;
+                border-left: 5px solid var(--primary-color);
+            }
+
+            input, textarea {
+                padding: 12px;
+                border: 1px solid #ced4da;
+                border-radius: 6px;
+                font-size: 1rem;
+            }
+
+            textarea { height: 100px; resize: vertical; }
+
+            button {
+                padding: 12px;
+                background-color: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: background 0.3s;
+            }
+
+            button:hover { background-color: var(--accent-color); }
+
+            /* --- Tableaux (Gestion des Actu & Inscrits) --- */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                background: white;
+            }
+
+            th {
+                background-color: var(--primary-color);
+                color: white;
+                padding: 15px;
+                text-align: left;
+            }
+
+            td {
+                padding: 12px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            /* --- Boutons d'action dans le tableau --- */
+            .btn-small { padding: 6px 12px; font-size: 0.85rem; }
+            .btn-delete { background-color: var(--danger-color); color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; }
+            .btn-delete:hover { background-color: #c0392b; }
+
+            .modifier-form {
+                display: flex;
+                gap: 5px;
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                border: none;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Administration CS BANZA</h1>
+
+        <!-- Formulaire d'actualités -->
+        <section>
+            <h2>Publier une Actualité</h2>
+            <form action="/publier" method="POST">
+                <input type="text" name="titre" placeholder="Titre"
+                    required><br>
+                <textarea name="contenu" placeholder="Texte de l'article"
+                    required></textarea><br>
+                <button type="submit">Publier sur le site</button>
+            </form>
+
+            <h2>Gestion des Actualités</h2>
+            <table>
+                <tr><th>Titre</th><th>Action</th></tr>
+                {% for a in actu %}
+                <tr>
+                    <td>
+                        <!-- Formulaire de modification intégré -->
+                        <form action="/modifier_actu/{{ a.id }}" method="POST">
+                            <input type="text" name="titre" value="{{ a.titre }}">
+                            <input type="text" name="contenu" value="{{ a.contenu }}">
+                            <button type="submit">Modifier</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="/supprimer_actu/{{ a.id }}" style="color: red; text-decoration: none;">Supprimer</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+
+        <!-- Visualisation inscriptions -->
+        <section>
+            <h2>Élèves Inscrits</h2>
+            <table border="1">
+                <tr><th>Nom</th><th>Classe</th><th>Option</th></tr>
+                {% for i in inscrits %}
+                <tr><td>{{ i.nomEleve }}</td><td>{{ i.classe }}</td><td>{{
+                        i.option }}</td></tr>
+                {% endfor %}
+            </table>
+        </section>
+    </body>
+</html>
