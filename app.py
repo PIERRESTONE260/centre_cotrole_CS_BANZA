@@ -1,3 +1,5 @@
+from mmap import ALLOCATIONGRANULARITY
+
 from flask import Flask, render_template, request, redirect, jsonify  # type: ignore[import]
 import sqlite3
 
@@ -88,7 +90,7 @@ def dashboard():
     # Récupération des actualités (toujours dans votre base SQLite)
     # ... (code habituel pour les actus) ...
     
-    return render_template('dashboard.html', inscrits=inscrits, actu=actu)
+    return render_template('dashboard.html', inscrits=inscrits, actu=ALLOCATIONGRANULARITY)
 
 if __name__ == '__main__':
     init_db()
