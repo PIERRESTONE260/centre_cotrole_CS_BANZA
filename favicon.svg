@@ -1,0 +1,62 @@
+<svg id="Calque_1" data-name="Calque 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 125 165.59">
+    <defs>
+        <style>
+            .cls-1 {
+                fill: #1a3a5f;
+                stroke: #f39c12;
+                stroke-width: 5px;
+            }
+
+            .cls-2,
+            .cls-5,
+            .cls-7 {
+                fill: #fff;
+            }
+
+            .cls-3 {
+                fill: none;
+                stroke: #1a3a5f;
+                stroke-width: 2px;
+            }
+
+            .cls-4 {
+                fill: #f39c12;
+            }
+
+            .cls-5,
+            .cls-7 {
+                isolation: isolate;
+                font-family: Arial-BoldMT, Arial;
+                font-weight: 700;
+            }
+
+            .cls-5 {
+                font-size: 14px;
+            }
+
+            .cls-6 {
+                letter-spacing: -0.04em;
+            }
+
+            .cls-7 {
+                font-size: 10px;
+            }
+
+            .cls-8 {
+                font-size: 9px;
+                fill: #ffd20a;
+                font-family: AgencyFB-Reg, Agency FB;
+            }
+        </style>
+    </defs>
+    <path class="cls-1" d="M100,20,40,50v60c0,40,60,70,60,70s60-30,60-70V50Z" transform="translate(-37.5 -17.2)" />
+    <path class="cls-2" d="M70,120s15-5,30,0c15-5,30,0,30,0V85s-15-5-30,0c-15-5-30,0-30,0v35"
+        transform="translate(-37.5 -17.2)" />
+    <line class="cls-3" x1="62.5" y1="67.8" x2="62.5" y2="102.8" />
+    <polygon class="cls-4"
+        points="62.5 27.8 67.5 42.8 82.5 42.8 70.5 52.8 74.5 67.8 62.5 57.8 50.5 67.8 54.5 52.8 42.5 42.8 57.5 42.8 62.5 27.8" />
+    <text class="cls-5" transform="translate(39.79 133.44)">BANZ<tspan class="cls-6" x="38.88" y="0">A</tspan>
+        </text><text class="cls-7" transform="translate(11.1 41.83) rotate(-26)">COMPLEXE</text><text class="cls-7"
+        transform="translate(65.13 19.12) rotate(25)">SCOLAIRE</text><text class="cls-8"
+        transform="translate(22.98 113.83)">Travail - Discipline - Réussite</text>
+</svg>

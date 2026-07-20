@@ -1,97 +1,116 @@
-from mmap import ALLOCATIONGRANULARITY
-
-from flask import Flask, render_template, request, redirect, jsonify  # type: ignore[import]
+from flask import Flask, render_template, request, redirect, jsonify, url_for
+from flask_cors import CORS 
 import sqlite3
+import pandas as pd
+import os
+import requests # Nécessaire pour communiquer avec l'API Apps Script du Classeur B
 
 app = Flask(__name__)
+# Remplacez '*' par l'URL réelle de votre site Netlify pour plus de sécurité
+CORS(app, resources={r"/api/*": {"origins": "https://csbanza.netlify.app"}})
 
-@app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-    return response
-# Initialisation de la base de données
+# URL de l'API Web App du Classeur B (Côtes) déployée sur Google Apps Script
+# Remplacez cette ligne par l'URL exacte obtenue lors du déploiement de votre Api.gs
+URL_API_COTES_B = "https://script.google.com/macros/s/AKfycbzmyuv8SMVpHCjr9OTuS1jAVVGRXZhwyqbpCOcuY-dpLhT0L0Dag6u9SoUTLnEcWk0s/exec"
+
+# Configuration du dossier d'upload pour les images
+UPLOAD_FOLDER = 'static/images'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Initialisation de la base de données avec les nouveaux champs pour les actualités
 def init_db():
     conn = sqlite3.connect('cs_banza.db')
-    conn.execute('CREATE TABLE IF NOT EXISTS actualites (id INTEGER PRIMARY KEY, titre TEXT, contenu TEXT)')
+    conn.execute('''CREATE TABLE IF NOT EXISTS actualites (
+                        id INTEGER PRIMARY KEY, 
+                        titre TEXT, 
+                        date TEXT, 
+                        image TEXT, 
+                        extrait TEXT, 
+                        contenu_complet TEXT)''')
     conn.execute('CREATE TABLE IF NOT EXISTS inscriptions (id INTEGER PRIMARY KEY, nomEleve TEXT, classe TEXT, option TEXT)')
     conn.close()
 
 @app.route('/')
 def dashboard():
+    # URL de votre Google Sheet d'inscription existant
+    url_sheet = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnehMzrPtz_JWvIUzyhY93nQC4Lm15gNB3YvMPXXw2zYPVeb04tKeIpCmTbxU5on8-gcY5AOkz_CXf/pub?gid=0&single=true&output=csv"
+    try:
+        df = pd.read_csv(url_sheet)
+        inscrits = df.to_dict(orient='records')
+    except Exception as e:
+        inscrits = []
+    
     conn = sqlite3.connect('cs_banza.db')
     conn.row_factory = sqlite3.Row
-    actu = conn.execute('SELECT * FROM actualites').fetchall()
-    inscrits = conn.execute('SELECT * FROM inscriptions').fetchall()
+    actu = conn.execute('SELECT * FROM actualites ORDER BY id DESC').fetchall()
     conn.close()
-    return render_template('dashboard.html', actu=actu, inscrits=inscrits)
+    
+    return render_template('dashboard.html', inscrits=inscrits, actu=actu)
 
 @app.route('/publier', methods=['POST'])
 def publier():
     titre = request.form['titre']
+    date = request.form['date']
+    extrait = request.form['extrait']
     contenu = request.form['contenu']
+    
+    file = request.files.get('image')
+    if file and file.filename != '':
+        filename = file.filename
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        image_path = f"images/{filename}"
+    else:
+        image_path = "images/default.jpg"
+
     conn = sqlite3.connect('cs_banza.db')
-    conn.execute('INSERT INTO actualites (titre, contenu) VALUES (?, ?)', (titre, contenu))
+    conn.execute('INSERT INTO actualites (titre, date, image, extrait, contenu_complet) VALUES (?, ?, ?, ?, ?)', 
+                 (titre, date, image_path, extrait, contenu))
     conn.commit()
     conn.close()
+    return redirect('/')
+
+# --- NOUVELLE FONCTIONNALITÉ : Ajout dynamique de cours vers le Classeur B ---
+@app.route('/ajouter_cours_admin', methods=['POST'])
+def ajouter_cours_admin():
+    classe_cible = request.form.get('classe_cible')
+    nom_cours = request.form.get('nom_cours')
+    
+    if classe_cible and nom_cours:
+        payload = {
+            "action": "ajouterCours",
+            "classe": classe_cible,
+            "nomCours": nom_cours
+        }
+        try:
+            # Envoi de la requête POST vers le script Google Apps Script du Classeur B
+            response = requests.post(URL_API_COTES_B, json=payload)
+            print("Réponse Apps Script :", response.text)
+        except Exception as e:
+            print("Erreur de communication avec le Classeur B :", str(e))
+            
     return redirect('/')
 
 @app.route('/api/actualites', methods=['GET'])
 def api_actualites():
-    # On se connecte à la base de données
     conn = sqlite3.connect('cs_banza.db')
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    # On récupère toutes les actualités
     cursor.execute('SELECT * FROM actualites ORDER BY id DESC')
     rows = cursor.fetchall()
     
-    # On transforme les données en liste de dictionnaires
-    liste_actu = [dict(row) for row in rows]
+    liste_actu = [{
+        "id": row["id"],
+        "titre": row["titre"],
+        "date": row["date"],
+        "image": row["image"],
+        "extrait": row["extrait"],
+        "contenu": row["contenu_complet"]
+    } for row in rows]
     
     conn.close()
-    
-    # On renvoie le tout au format JSON
     return jsonify(liste_actu)
-
-# Route pour supprimer une actualité
-@app.route('/supprimer_actu/<int:id>')
-def supprimer_actu(id):
-    conn = sqlite3.connect('cs_banza.db')
-    conn.execute('DELETE FROM actualites WHERE id = ?', (id,))
-    conn.commit()
-    conn.close()
-    return redirect('/')
-
-# Route pour modifier (Exemple simple : mise à jour du contenu)
-@app.route('/modifier_actu/<int:id>', methods=['POST'])
-def modifier_actu(id):
-    titre = request.form['titre']
-    contenu = request.form['contenu']
-    conn = sqlite3.connect('cs_banza.db')
-    conn.execute('UPDATE actualites SET titre = ?, contenu = ? WHERE id = ?', (titre, contenu, id))
-    conn.commit()
-    conn.close()
-    return redirect('/')
-
-import pandas as pd # Installez-le avec : pip install pandas
-
-@app.route('/')
-def dashboard():
-    # Remplacez le lien ci-dessous par VOTRE lien de publication CSV
-    url_sheet = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnehMzrPtz_JWvIUzyhY93nQC4Lm15gNB3YvMPXXw2zYPVeb04tKeIpCmTbxU5on8-gcY5AOkz_CXf/pub?gid=0&single=true&output=csv"
-    
-    # Lecture des données directement depuis le lien
-    df = pd.read_csv(url_sheet)
-    inscrits = df.to_dict(orient='records')
-    
-    # Récupération des actualités (toujours dans votre base SQLite)
-    # ... (code habituel pour les actus) ...
-    
-    return render_template('dashboard.html', inscrits=inscrits, actu=ALLOCATIONGRANULARITY)
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
