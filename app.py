@@ -41,16 +41,13 @@ init_db()
 
 @app.route('/')
 def dashboard():
-    # URL de votre Google Sheet d'inscription existant
-    url_sheet = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnehMzrPtz_JWvIUzyhY93nQC4Lm15gNB3YvMPXXw2zYPVeb04tKeIpCmTbxU5on8-gcY5AOkz_CXf/pub?gid=0&single=true&output=csv"
-    try:
-        df = pd.read_csv(url_sheet)
-        inscrits = df.to_dict(orient='records')
-    except Exception as e:
-        inscrits = []
-    
     conn = sqlite3.connect('cs_banza.db')
     conn.row_factory = sqlite3.Row
+    
+    # Récupération des élèves inscrits directement depuis la base de données SQLite
+    inscrits = conn.execute('SELECT * FROM inscriptions ORDER BY id DESC').fetchall()
+    
+    # Récupération des actualités
     actu = conn.execute('SELECT * FROM actualites ORDER BY id DESC').fetchall()
     conn.close()
     
