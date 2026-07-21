@@ -3,10 +3,11 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/css/admin.css">
         <title>Centre de Contrôle CS BANZA</title>
-        <link rel="shortcut icon" href="/static/images/logo.png"
-            type="image/x-icon">
+        <!-- FAVICON -->
+        <link rel="shortcut icon"
+            href="{{ url_for('static', filename='img/favicon.svg') }}"
+            type="image/xlm">
         <style>
             /* --- Votre style original conservé --- */
             :root { --accent: #f39c12; --primary-color: #1a3a5f; --accent-color: #2c5a8e; --danger-color: #e74c3c; --bg-color: #f4f7f6; }
@@ -38,7 +39,8 @@
 
         <!-- En-tête avec Logo affiché proprement et responsive -->
         <div class="header-banner">
-            <img src="/static/images/logo.png" alt="Logo CS BANZA">
+            <!-- <img src="{{ url_for('static', filename='img/logo.png') }}">
+                alt="Logo CS BANZA" -->
             <div>
                 <h1 style="margin: 0; border: none; padding: 0;">CS BANZA</h1>
                 <p style="margin: 5px 0 0 0; color: #666;">Centre de Contrôle

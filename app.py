@@ -58,25 +58,33 @@ def dashboard():
 
 @app.route('/publier', methods=['POST'])
 def publier():
-    titre = request.form['titre']
-    date = request.form['date']
-    extrait = request.form['extrait']
-    contenu = request.form['contenu']
-    
-    file = request.files.get('image')
-    if file and file.filename != '':
-        filename = file.filename
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        image_path = f"images/{filename}"
-    else:
-        image_path = "images/default.jpg"
+    try:
+        titre = request.form['titre']
+        date = request.form['date']
+        extrait = request.form['extrait']
+        contenu = request.form['contenu']
+        
+        # S'assurer que le dossier static/images existe physiquement
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        
+        file = request.files.get('image')
+        if file and file.filename != '':
+            filename = file.filename
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image_path = f"images/{filename}"
+        else:
+            image_path = "images/default.jpg"
 
-    conn = sqlite3.connect('cs_banza.db')
-    conn.execute('INSERT INTO actualites (titre, date, image, extrait, contenu_complet) VALUES (?, ?, ?, ?, ?)', 
-                 (titre, date, image_path, extrait, contenu))
-    conn.commit()
-    conn.close()
-    return redirect('/')
+        conn = sqlite3.connect('cs_banza.db')
+        conn.execute('INSERT INTO actualites (titre, date, image, extrait, contenu_complet) VALUES (?, ?, ?, ?, ?)', 
+                     (titre, date, image_path, extrait, contenu))
+        conn.commit()
+        conn.close()
+        
+        return redirect('/')
+    except Exception as e:
+        print("ERREUR LORS DE LA PUBLICATION :", str(e))
+        return f"Erreur interne du serveur : {str(e)}", 500
 
 # --- NOUVELLE FONCTIONNALITÉ : Ajout dynamique de cours vers le Classeur B ---
 @app.route('/ajouter_cours_admin', methods=['POST'])
