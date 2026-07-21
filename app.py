@@ -17,20 +17,27 @@ URL_API_COTES_B = "https://script.google.com/macros/s/AKfycbzmyuv8SMVpHCjr9OTuS1
 UPLOAD_FOLDER = 'static/images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Initialisation de la base de données avec les nouveaux champs pour les actualités
+# --- INITIALISATION FORCÉE DE LA BASE DE DONNÉES ---
 def init_db():
     conn = sqlite3.connect('cs_banza.db')
-    # Table actualites complète avec tous les champs requis par le formulaire
-    conn.execute('''CREATE TABLE IF NOT EXISTS actualites (
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS actualites (
                         id INTEGER PRIMARY KEY AUTOINCREMENT, 
                         titre TEXT, 
                         date TEXT, 
                         image TEXT, 
                         extrait TEXT, 
                         contenu_complet TEXT)''')
-    conn.execute('CREATE TABLE IF NOT EXISTS inscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, nomEleve TEXT, classe TEXT, option TEXT)')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS inscriptions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                        nomEleve TEXT, 
+                        classe TEXT, 
+                        option TEXT)''')
     conn.commit()
     conn.close()
+
+# Exécution immédiate au démarrage de l'application
+init_db()
 
 @app.route('/')
 def dashboard():
