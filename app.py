@@ -37,9 +37,23 @@ init_db()
 def dashboard():
     conn = sqlite3.connect('cs_banza.db')
     conn.row_factory = sqlite3.Row
-    inscrits = conn.execute('SELECT * FROM inscriptions ORDER BY id DESC').fetchall()
     actu = conn.execute('SELECT * FROM actualites ORDER BY id DESC').fetchall()
     conn.close()
+
+    inscrits = []
+    try:
+        # Récupération en temps réel des élèves inscrits depuis Google Sheets
+        response = requests.get(URL_API_COTES_B + "?action=getInscriptions", timeout=8)
+        if response.status_code == 200:
+            inscrits = response.json()
+    except Exception as e:
+        print("Erreur de récupération des inscrits depuis Google Sheets :", str(e))
+        # Fallback de secours sur la base locale SQLite
+        conn = sqlite3.connect('cs_banza.db')
+        conn.row_factory = sqlite3.Row
+        inscrits = conn.execute('SELECT * FROM inscriptions ORDER BY id DESC').fetchall()
+        conn.close()
+
     return render_template('dashboard.html', inscrits=inscrits, actu=actu)
 
 @app.route('/publier', methods=['POST'])
@@ -73,13 +87,13 @@ def publier():
 @app.route('/api/inscrire', methods=['POST'])
 def api_inscrire():
     try:
-        # Récupération des données envoyées par le formulaire d'inscription
         data = request.get_json() or request.form
         nomEleve = data.get('nomEleve')
         classe = data.get('classe')
         option = data.get('option')
 
         if nomEleve and classe:
+            # Enregistrement local SQLite (Backup)
             conn = sqlite3.connect('cs_banza.db')
             conn.execute('INSERT INTO inscriptions (nomEleve, classe, option) VALUES (?, ?, ?)', 
                          (nomEleve, classe, option))
@@ -108,12 +122,16 @@ def api_get_inscriptions():
 def ajouter_cours_admin():
     classe_cible = request.form.get('classe_cible')
     nom_cours = request.form.get('nom_cours')
+    
     if classe_cible and nom_cours:
         payload = {"action": "ajouterCours", "classe": classe_cible, "nomCours": nom_cours}
         try:
-            requests.post(URL_API_COTES_B, json=payload)
+            response = requests.post(URL_API_COTES_B, json=payload, allow_redirects=True, timeout=10)
+            print("Réponse Google Apps Script (Statut) :", response.status_code)
+            print("Réponse Google Apps Script (Contenu) :", response.text)
         except Exception as e:
-            print("Erreur Classeur B :", str(e))
+            print("ERREUR CRITIQUE lors de l'envoi au Classeur B :", str(e))
+            
     return redirect('/')
 
 @app.route('/api/actualites', methods=['GET'])

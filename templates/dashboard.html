@@ -146,19 +146,65 @@
                 </form>
             </section>
 
-            <!-- Visualisation inscriptions existante -->
+            <!-- SECTION : Élèves Inscrits avec Statistiques et Recherche -->
             <section style="margin-top: 40px;">
-                <h2>Élèves Inscrits</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h2>Élèves Inscrits (Centre de Contrôle)</h2>
+                    <span style="background: var(--primary-color); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;">
+                        Total Inscrits : {{ inscrits | length }}
+                    </span>
+                </div>
+
+                <!-- Barre de recherche rapide pour l'administration -->
+                <div style="margin: 15px 0;">
+                    <input type="text" id="searchEleve" placeholder="Rechercher un élève par nom, classe ou matricule..." onkeyup="filtrerEleves()" style="background: #fff;">
+                </div>
+
                 <div class="table-responsive">
-                    <table>
-                        <tr><th>Nom</th><th>Classe</th><th>Option</th></tr>
-                        {% for i in inscrits %}
-                        <tr><td>{{ i.nomEleve }}</td><td>{{ i.classe
-                                }}</td><td>{{ i.option }}</td></tr>
-                        {% endfor %}
+                    <table id="tableInscrits">
+                        <thead>
+                            <tr>
+                                <th>Matricule</th>
+                                <th>Nom</th>
+                                <th>Postnom</th>
+                                <th>Prénom</th>
+                                <th>Classe / Option</th>
+                                <th>Mot de passe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in inscrits %}
+                            <tr>
+                                <td><strong>{{ i.matricule if i.matricule else 'N/A' }}</strong></td>
+                                <td>{{ i.nom if i.nom else i.nomEleve }}</td>
+                                <td>{{ i.postnom if i.postnom else '-' }}</td>
+                                <td>{{ i.prenom if i.prenom else '-' }}</td>
+                                <td>{{ i.classe if i.classe else '-' }} {% if i.option %}({{ i.option }}){% endif %}</td>
+                                <td><code style="background: #eee; padding: 3px 6px; border-radius: 4px;">{{ i.motDePasse if i.motDePasse else 'Protégé' }}</code></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </section>
+
+            <!-- Script de filtrage instantané -->
+            <script>
+                function filtrerEleves() {
+                    let input = document.getElementById("searchEleve").value.toLowerCase();
+                    let table = document.getElementById("tableInscrits");
+                    let tr = table.getElementsByTagName("tr");
+
+                    for (let i = 1; i < tr.length; i++) {
+                        let rowText = tr[i].textContent.toLowerCase();
+                        if (rowText.includes(input)) {
+                            tr[i].style.display = "";
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            </script>
         </div>
     </body>
 </html>
