@@ -10,6 +10,9 @@ CORS(app, resources={r"/api/*": {"origins": "*"}}) # Autorise Netlify à communi
 
 URL_API_COTES_B = "https://script.google.com/macros/s/AKfycbzmyuv8SMVpHCjr9OTuS1jAVVGRXZhwyqbpCOcuY-dpLhT0L0Dag6u9SoUTLnEcWk0s/exec"
 
+# URL de ton nouveau Google Apps Script dédié aux Actualités (Remplace par ton URL finale)
+URL_API_ACTUALITES = "https://script.google.com/macros/s/AKfycbzhXH7mgftRTTr6uh90X_r92NVyDhZNrIQ53dCvgWbhstSaRb1NIrRqA49xlHXc_VqK/exec"
+
 UPLOAD_FOLDER = 'static/images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -35,20 +38,27 @@ init_db()
 
 @app.route('/')
 def dashboard():
-    conn = sqlite3.connect('cs_banza.db')
-    conn.row_factory = sqlite3.Row
-    actu = conn.execute('SELECT * FROM actualites ORDER BY id DESC').fetchall()
-    conn.close()
+    # 1. Récupération des actualités depuis Google Sheets (avec secours SQLite)
+    actu = []
+    try:
+        response = requests.get(URL_API_ACTUALITES + "?action=getActualites", timeout=8)
+        if response.status_code == 200:
+            actu = response.json()
+    except Exception as e:
+        print("Erreur de récupération des actualités depuis Google Sheets :", str(e))
+        conn = sqlite3.connect('cs_banza.db')
+        conn.row_factory = sqlite3.Row
+        actu = conn.execute('SELECT * FROM actualites ORDER BY id DESC').fetchall()
+        conn.close()
 
+    # 2. Récupération des élèves inscrits depuis Google Sheets (avec secours SQLite)
     inscrits = []
     try:
-        # Récupération en temps réel des élèves inscrits depuis Google Sheets
         response = requests.get(URL_API_COTES_B + "?action=getInscriptions", timeout=8)
         if response.status_code == 200:
             inscrits = response.json()
     except Exception as e:
         print("Erreur de récupération des inscrits depuis Google Sheets :", str(e))
-        # Fallback de secours sur la base locale SQLite
         conn = sqlite3.connect('cs_banza.db')
         conn.row_factory = sqlite3.Row
         inscrits = conn.execute('SELECT * FROM inscriptions ORDER BY id DESC').fetchall()
@@ -73,11 +83,27 @@ def publier():
         else:
             image_path = "images/default.jpg"
 
+        # 1. Enregistrement local SQLite (Backup immédiat)
         conn = sqlite3.connect('cs_banza.db')
         conn.execute('INSERT INTO actualites (titre, date, image, extrait, contenu_complet) VALUES (?, ?, ?, ?, ?)', 
                      (titre, date, image_path, extrait, contenu))
         conn.commit()
         conn.close()
+
+        # 2. Envoi vers le Google Sheet des Actualités pour une persistance totale sur Render
+        payload = {
+            "action": "publierActualite",
+            "titre": titre,
+            "date": date,
+            "image": image_path,
+            "extrait": extrait,
+            "contenu": contenu
+        }
+        try:
+            requests.post(URL_API_ACTUALITES, json=payload, timeout=10)
+        except Exception as err:
+            print("Erreur d'envoi de l'actualité vers Google Sheets :", str(err))
+
         return redirect('/')
     except Exception as e:
         print("ERREUR LORS DE LA PUBLICATION :", str(e))
@@ -93,7 +119,6 @@ def api_inscrire():
         option = data.get('option')
 
         if nomEleve and classe:
-            # Enregistrement local SQLite (Backup)
             conn = sqlite3.connect('cs_banza.db')
             conn.execute('INSERT INTO inscriptions (nomEleve, classe, option) VALUES (?, ?, ?)', 
                          (nomEleve, classe, option))
@@ -106,7 +131,6 @@ def api_inscrire():
         print("ERREUR INSCRIPTION :", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- ROUTE API : Pour consulter la liste des inscrits en JSON si besoin ---
 @app.route('/api/inscriptions', methods=['GET'])
 def api_get_inscriptions():
     conn = sqlite3.connect('cs_banza.db')
@@ -124,7 +148,6 @@ def ajouter_cours_admin():
     nom_cours = request.form.get('nom_cours')
     
     if classe_cible and nom_cours:
-        # Envoi de la requête au script Google Apps Script avec l'action et le nom exact de l'onglet cible
         payload = {
             "action": "ajouterCours", 
             "classe": classe_cible.strip(), 
@@ -141,17 +164,24 @@ def ajouter_cours_admin():
 
 @app.route('/api/actualites', methods=['GET'])
 def api_actualites():
-    conn = sqlite3.connect('cs_banza.db')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM actualites ORDER BY id DESC')
-    rows = cursor.fetchall()
-    liste_actu = [{
-        "id": row["id"], "titre": row["titre"], "date": row["date"],
-        "image": row["image"], "extrait": row["extrait"], "contenu": row["contenu_complet"]
-    } for row in rows]
-    conn.close()
-    return jsonify(liste_actu)
+    # Récupération globale pour le site web front-end
+    actu = []
+    try:
+        response = requests.get(URL_API_ACTUALITES + "?action=getActualites", timeout=8)
+        if response.status_code == 200:
+            actu = response.json()
+    except Exception as e:
+        conn = sqlite3.connect('cs_banza.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM actualites ORDER BY id DESC')
+        rows = cursor.fetchall()
+        actu = [{
+            "id": row["id"], "titre": row["titre"], "date": row["date"],
+            "image": row["image"], "extrait": row["extrait"], "contenu": row["contenu_complet"]
+        } for row in rows]
+        conn.close()
+    return jsonify(actu)
 
 if __name__ == '__main__':
     init_db()
