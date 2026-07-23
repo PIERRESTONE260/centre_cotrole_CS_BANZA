@@ -9,20 +9,18 @@
             href="{{ url_for('static', filename='img/favicon.svg') }}"
             type="image/xlm">
         <style>
-            /* --- Votre style original conservé --- */
             :root { --accent: #f39c12; --primary-color: #1a3a5f; --accent-color: #2c5a8e; --danger-color: #e74c3c; --bg-color: #f4f7f6; }
             body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
             .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
             h1 { color: var(--accent); border-bottom: 2px solid #eee; padding-bottom: 10px; }
             h2 { color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px; }
-            form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; padding: 25px; background: #f8f9fa; border-radius: 8px; border-left: 5px solid var(--accent); }
+            form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; padding: 25px; background: #f8f9fa; border-radius: 8px; border-left: 5px solid var(--accent); }
             input, textarea, select { padding: 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; }
             button { padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
             table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
             th { background-color: var(--primary-color); color: white; padding: 15px; text-align: left; }
             td { padding: 12px; border-bottom: 1px solid #ddd; }
 
-            /* --- Améliorations Responsive & Logo --- */
             .header-banner { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
             .header-banner img { width: 70px; height: auto; object-fit: contain; }
             .table-responsive { width: 100%; overflow-x: auto; }
@@ -37,34 +35,26 @@
     </head>
     <body>
 
-        <!-- En-tête avec Logo affiché proprement et responsive -->
+        <!-- En-tête avec Logo -->
         <div class="header-banner">
-            <!-- <img src="{{ url_for('static', filename='img/logo.png') }}">
-                alt="Logo CS BANZA" -->
             <div>
                 <h1 style="margin: 0; border: none; padding: 0;">CS BANZA</h1>
-                <p style="margin: 5px 0 0 0; color: #666;">Centre de Contrôle
-                    Administratif</p>
+                <p style="margin: 5px 0 0 0; color: #666;">Centre de Contrôle Administratif</p>
             </div>
         </div>
 
         <div class="container">
             <h1>Administration CS BANZA</h1>
 
-            <!-- Formulaire de Publication existant -->
+            <!-- Section de Publication d'Actualités -->
             <section>
                 <h2>Publier une Actualité</h2>
-                <form action="/publier" method="POST"
-                    enctype="multipart/form-data">
-                    <input type="text" name="titre" placeholder="Titre"
-                        required>
+                <form action="/publier" method="POST" enctype="multipart/form-data">
+                    <input type="text" name="titre" placeholder="Titre" required>
                     <input type="date" name="date" required>
                     <input type="file" name="image" accept="image/*" required>
-                    <textarea name="extrait" placeholder="Résumé court"
-                        required></textarea>
-                    <textarea name="contenu"
-                        placeholder="Texte complet de l'article"
-                        required></textarea>
+                    <textarea name="extrait" placeholder="Résumé court" required></textarea>
+                    <textarea name="contenu" placeholder="Texte complet de l'article" required></textarea>
                     <button type="submit">Publier sur le site</button>
                 </form>
 
@@ -78,8 +68,7 @@
                             <td>{{ a.titre }}</td>
                             <td>{{ a.extrait }}</td>
                             <td>
-                                <a href="/supprimer_actu/{{ a.id }}"
-                                    style="color: red; text-decoration: none;">Supprimer</a>
+                                <a href="/supprimer_actu/{{ a.id }}" style="color: red; text-decoration: none;">Supprimer</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -87,25 +76,22 @@
                 </div>
             </section>
 
-            <!-- NOUVELLE SECTION : Gestion des Cours et Notes par Classe (Connecté Classeur B) -->
+            <!-- GESTION PÉDAGOGIQUE : Cours & Notes avec TOUTES les classes et options -->
             <section style="margin-top: 40px;">
                 <h2>Gestion Pédagogique (Cours & Notes)</h2>
-                <form action="/ajouter_cours_admin" method="POST"
-                    style="border-left-color: var(--primary-color);">
-                    <p
-                        style="margin: 0; font-weight: bold; color: var(--primary-color);">Ajouter
-                        un nouveau cours à une classe / option</p>
-                    <select name="classe_cible" required>
-                        <option value>-- Sélectionner la classe / option
-                            --</option>
+                <form action="/ajouter_cours_admin" method="POST" style="border-left-color: var(--primary-color);">
+                    <p style="margin: 0; font-weight: bold; color: var(--primary-color);">Ajouter un nouveau cours à une classe / option</p>
+                    
+                    <!-- Liste exhaustive de TOUTES les classes de l'établissement -->
+                    <select name="classe_cible" id="classeCible" required onchange="mettreAJourAperçu()">
+                        <option value="">-- Sélectionner la classe ou l'option --</option>
+                        
                         <optgroup label="Maternelle">
-                            <option value="1ère Maternelle">1ère
-                                Maternelle</option>
-                            <option value="2ème Maternelle">2ème
-                                Maternelle</option>
-                            <option value="3ème Maternelle">3ème
-                                Maternelle</option>
+                            <option value="1ère Maternelle">1ère Maternelle</option>
+                            <option value="2ème Maternelle">2ème Maternelle</option>
+                            <option value="3ème Maternelle">3ème Maternelle</option>
                         </optgroup>
+                        
                         <optgroup label="Primaire">
                             <option value="1ère Primaire">1ère Primaire</option>
                             <option value="2ème Primaire">2ème Primaire</option>
@@ -114,39 +100,64 @@
                             <option value="5ème Primaire">5ème Primaire</option>
                             <option value="6ème Primaire">6ème Primaire</option>
                         </optgroup>
-                        <optgroup label="Secondaire Général">
-                            <option value="7ème Secondaire">7ème
-                                Secondaire</option>
-                            <option value="8ème Secondaire">8ème
-                                Secondaire</option>
+                        
+                        <optgroup label="Secondaire Général (7ème & 8ème)">
+                            <option value="7ème Secondaire">7ème Secondaire</option>
+                            <option value="8ème Secondaire">8ème Secondaire</option>
                         </optgroup>
-                        <optgroup label="Secondaire avec Options (1ère à 4ème)">
-                            <option value="1ère secondaire (Commerciale)">1ère
-                                secondaire - Commerciale</option>
-                            <option value="1ère secondaire (Littéraire)">1ère
-                                secondaire - Littéraire</option>
-                            <option value="1ère secondaire (Scientifique)">1ère
-                                secondaire - Scientifique</option>
-                            <option value="2ème secondaire (Commerciale)">2ème
-                                secondaire - Commerciale</option>
-                            <option value="2ème secondaire (Littéraire)">2ème
-                                secondaire - Littéraire</option>
-                            <option value="3ème secondaire (Commerciale)">3ème
-                                secondaire - Commerciale</option>
-                            <option value="4ème secondaire (Commerciale)">4ème
-                                secondaire - Commerciale</option>
+                        
+                        <optgroup label="Secondaire - Cycles & Options (1ère à 4ème)">
+                            <option value="1ère secondaire - CG">1ère secondaire - Commerciale (CG)</option>
+                            <option value="1ère secondaire - LITT">1ère secondaire - Littéraire (LITT)</option>
+                            <option value="1ère secondaire - SCIENCES">1ère secondaire - Scientifique (SCIENCES)</option>
+                            <option value="1ère secondaire - TCC">1ère secondaire - Technique (TCC)</option>
+                            <option value="1ère secondaire - HP">1ère secondaire - Pédagogie (HP)</option>
+                            <option value="1ère secondaire - MG">1ère secondaire - Mécanique Générale (MG)</option>
+                            <option value="1ère secondaire - MA">1ère secondaire - Mécanique Auto (MA)</option>
+                            <option value="1ère secondaire - ELEC">1ère secondaire - Électricité (ELEC)</option>
+
+                            <option value="2ème secondaire - CG">2ème secondaire - Commerciale (CG)</option>
+                            <option value="2ème secondaire - LITT">2ème secondaire - Littéraire (LITT)</option>
+                            <option value="2ème secondaire - SCIENCES">2ème secondaire - Scientifique (SCIENCES)</option>
+                            <option value="2ème secondaire - TCC">2ème secondaire - Technique (TCC)</option>
+                            <option value="2ème secondaire - HP">2ème secondaire - Pédagogie (HP)</option>
+                            <option value="2ème secondaire - MG">2ème secondaire - Mécanique Générale (MG)</option>
+                            <option value="2ème secondaire - MA">2ème secondaire - Mécanique Auto (MA)</option>
+                            <option value="2ème secondaire - ELEC">2ème secondaire - Électricité (ELEC)</option>
+
+                            <option value="3ème secondaire - CG">3ème secondaire - Commerciale (CG)</option>
+                            <option value="3ème secondaire - LITT">3ème secondaire - Littéraire (LITT)</option>
+                            <option value="3ème secondaire - SCIENCES">3ème secondaire - Scientifique (SCIENCES)</option>
+                            <option value="3ème secondaire - TCC">3ème secondaire - Technique (TCC)</option>
+                            <option value="3ème secondaire - HP">3ème secondaire - Pédagogie (HP)</option>
+                            <option value="3ème secondaire - MG">3ème secondaire - Mécanique Générale (MG)</option>
+                            <option value="3ème secondaire - MA">3ème secondaire - Mécanique Auto (MA)</option>
+                            <option value="3ème secondaire - ELEC">3ème secondaire - Électricité (ELEC)</option>
+
+                            <option value="4ème secondaire - CG">4ème secondaire - Commerciale (CG)</option>
+                            <option value="4ème secondaire - LITT">4ème secondaire - Littéraire (LITT)</option>
+                            <option value="4ème secondaire - SCIENCES">4ème secondaire - Scientifique (SCIENCES)</option>
+                            <option value="4ème secondaire - TCC">4ème secondaire - Technique (TCC)</option>
+                            <option value="4ème secondaire - HP">4ème secondaire - Pédagogie (HP)</option>
+                            <option value="4ème secondaire - MG">4ème secondaire - Mécanique Générale (MG)</option>
+                            <option value="4ème secondaire - MA">4ème secondaire - Mécanique Auto (MA)</option>
+                            <option value="4ème secondaire - ELEC">4ème secondaire - Électricité (ELEC)</option>
                         </optgroup>
                     </select>
-                    <input type="text" name="nom_cours"
-                        placeholder="Nom du nouveau cours (ex: Mathématiques)"
-                        required>
-                    <button type="submit"
-                        style="background-color: var(--accent);">Ajouter le
-                        cours dans la base</button>
+
+                    <input type="text" name="nom_cours" placeholder="Nom du nouveau cours (ex: Anglais, Mathématiques)" required>
+                    <button type="submit" style="background-color: var(--accent);">Ajouter le cours dans la base</button>
                 </form>
+
+                <!-- APERÇU EN TEMPS RÉEL DANS LE CENTRE DE CONTRÔLE -->
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px;">
+                    <h3 style="margin-top: 0; color: var(--primary-color);">Aperçu de la sélection active</h3>
+                    <p>Classe / Option sélectionnée : <strong id="apercuClasse" style="color: var(--accent);">Aucune sélectionnée</strong></p>
+                    <p style="font-size: 0.9rem; color: #666;">Le nouveau cours saisi sera directement injecté dans les en-têtes de cette section en préservant la structure des notes et du pourcentage.</p>
+                </div>
             </section>
 
-            <!-- SECTION : Élèves Inscrits avec Statistiques et Recherche -->
+            <!-- SECTION : Élèves Inscrits -->
             <section style="margin-top: 40px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <h2>Élèves Inscrits (Centre de Contrôle)</h2>
@@ -155,7 +166,6 @@
                     </span>
                 </div>
 
-                <!-- Barre de recherche rapide pour l'administration -->
                 <div style="margin: 15px 0;">
                     <input type="text" id="searchEleve" placeholder="Rechercher un élève par nom, classe ou matricule..." onkeyup="filtrerEleves()" style="background: #fff;">
                 </div>
@@ -188,7 +198,7 @@
                 </div>
             </section>
 
-            <!-- Script de filtrage instantané -->
+            <!-- Scripts utilitaires (Filtre et Aperçu) -->
             <script>
                 function filtrerEleves() {
                     let input = document.getElementById("searchEleve").value.toLowerCase();
@@ -202,6 +212,18 @@
                         } else {
                             tr[i].style.display = "none";
                         }
+                    }
+                }
+
+                function mettreAJourAperçu() {
+                    let select = document.getElementById("classeCible");
+                    let valeurTexte = select.options[select.selectedIndex].text;
+                    let affichageApercu = document.getElementById("apercuClasse");
+                    
+                    if (select.value === "") {
+                        affichageApercu.textContent = "Aucune sélectionnée";
+                    } else {
+                        affichageApercu.textContent = valeurTexte;
                     }
                 }
             </script>

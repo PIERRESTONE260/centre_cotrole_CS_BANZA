@@ -124,9 +124,14 @@ def ajouter_cours_admin():
     nom_cours = request.form.get('nom_cours')
     
     if classe_cible and nom_cours:
-        payload = {"action": "ajouterCours", "classe": classe_cible, "nomCours": nom_cours}
+        # Envoi de la requête au script Google Apps Script avec l'action et le nom exact de l'onglet cible
+        payload = {
+            "action": "ajouterCours", 
+            "classe": classe_cible.strip(), 
+            "nomCours": nom_cours.strip()
+        }
         try:
-            response = requests.post(URL_API_COTES_B, json=payload, allow_redirects=True, timeout=10)
+            response = requests.post(URL_API_COTES_B, json=payload, allow_redirects=True, timeout=15)
             print("Réponse Google Apps Script (Statut) :", response.status_code)
             print("Réponse Google Apps Script (Contenu) :", response.text)
         except Exception as e:
