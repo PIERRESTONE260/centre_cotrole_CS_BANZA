@@ -183,6 +183,26 @@ def api_actualites():
         conn.close()
     return jsonify(actu)
 
+@app.route('/supprimer_actu/<int:id>')
+def supprimer_actu(id):
+    try:
+        # 1. Suppression dans SQLite (Local)
+        conn = sqlite3.connect('cs_banza.db')
+        conn.execute('DELETE FROM actualites WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+
+        # 2. Suppression dans Google Sheets (Distant)
+        payload = {
+            "action": "supprimerActualite",
+            "id": id
+        }
+        requests.post(URL_API_ACTUALITES, json=payload, timeout=10)
+    except Exception as e:
+        print("Erreur lors de la suppression de l'actualité :", str(e))
+        
+    return redirect('/')
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get("PORT", 5000))
